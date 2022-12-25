@@ -1,0 +1,11 @@
+[package]
+name = "dyn-smooth"
+version = "0.1.0"
+authors = ["Oliver Rockstedt <info@sourcebox.de>"]
+license = "MIT"
+edition = "2021"
+rust-version = "1.56"
+description = "Dynamic smoothing filter based on an algorithm by Andrew Simper."
+repository = "https://github.com/sourcebox/dyn-smooth-rs"
+categories = ["no-std", "embedded", "algorithms"]
+keywords = ["dsp", "filter", "smoothing", "adc"]
