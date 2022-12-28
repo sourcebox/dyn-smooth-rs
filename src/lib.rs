@@ -23,6 +23,9 @@ pub struct DynamicSmootherEcoF32 {
     /// Base filter coefficient calculated from `basefreq`.
     g0: f32,
 
+    /// Overall filter coefficient calculated from `g0` and `sense`.
+    g: f32,
+
     /// Sensitivity of the dynamic response.
     sense: f32,
 }
@@ -46,6 +49,7 @@ impl DynamicSmootherEcoF32 {
             low1: 0.0,
             low2: 0.0,
             g0,
+            g: g0,
             sense: sensitivity * 4.0,
         }
     }
@@ -69,13 +73,13 @@ impl DynamicSmootherEcoF32 {
         // Get the filter coefficient from the base value and a dynamic
         // amount depending on the bandpass response and sensitivity.
         // Value is clamped to 1.
-        let g = f32::min(self.g0 + self.sense * bandz, 1.0);
+        self.g = f32::min(self.g0 + self.sense * bandz, 1.0);
 
         // Calculate lowpass 1 signal based on input.
-        self.low1 = low1z + g * (input - low1z);
+        self.low1 = low1z + self.g * (input - low1z);
 
         // Calculate lowpass 2 signal based on lowpass 1 output.
-        self.low2 = low2z + g * (self.low1 - low2z);
+        self.low2 = low2z + self.g * (self.low1 - low2z);
 
         // Return lowpass 2 signal as output.
         self.low2
@@ -84,6 +88,16 @@ impl DynamicSmootherEcoF32 {
     /// Returns the last output value.
     pub fn value(&self) -> f32 {
         self.low2
+    }
+
+    /// Returns the base filter coefficient.
+    pub fn g0(&self) -> f32 {
+        self.g0
+    }
+
+    /// Returns the overall filter coefficient.
+    pub fn g(&self) -> f32 {
+        self.g
     }
 }
 
@@ -100,6 +114,9 @@ pub struct DynamicSmootherEcoI32 {
 
     /// Base filter coefficient calculated from `basefreq`.
     g0: i32,
+
+    /// Overall filter coefficient calculated from `g0` and `sense`.
+    g: i32,
 
     /// Sensitivity of the dynamic response.
     sense: i32,
@@ -127,6 +144,7 @@ impl DynamicSmootherEcoI32 {
             low1: 0,
             low2: 0,
             g0,
+            g: g0,
             sense: sensitivity * 4,
         }
     }
@@ -152,19 +170,19 @@ impl DynamicSmootherEcoI32 {
         // Get the filter coefficient from the base value and a dynamic
         // amount depending on the bandpass response and sensitivity.
         // Value is clamped to 1.
-        let g = i32::min(
+        self.g = i32::min(
             self.g0 + ((self.sense as i64 * bandz as i64) >> I32_INTERNAL_FRAC_BITS) as i32,
             1 << tan::TAN_LUT_FRAC_BITS,
         );
 
         // Calculate lowpass 1 signal based on input.
         self.low1 = (low1z as i64
-            + (((g as i64) * (input - low1z) as i64) >> tan::TAN_LUT_FRAC_BITS))
+            + (((self.g as i64) * (input - low1z) as i64) >> tan::TAN_LUT_FRAC_BITS))
             as i32;
 
         // Calculate lowpass 2 signal based on lowpass 1 output.
         self.low2 = (low2z as i64
-            + (((g as i64) * (self.low1 - low2z) as i64) >> tan::TAN_LUT_FRAC_BITS))
+            + (((self.g as i64) * (self.low1 - low2z) as i64) >> tan::TAN_LUT_FRAC_BITS))
             as i32;
 
         // Return lowpass 2 signal as output.
@@ -174,6 +192,16 @@ impl DynamicSmootherEcoI32 {
     /// Returns the last output value.
     pub fn value(&self) -> i32 {
         self.low2 >> I32_INTERNAL_FRAC_BITS
+    }
+
+    /// Returns the base filter coefficient.
+    pub fn g0(&self) -> i32 {
+        self.g0
+    }
+
+    /// Returns the overall filter coefficient.
+    pub fn g(&self) -> i32 {
+        self.g
     }
 }
 

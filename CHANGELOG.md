@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
     - Function `value` to return the last output value.
+    - Functions `g0` and `g` added to return the filter coefficients.
 
 ## [0.1.0] - 2022-12-25
 
