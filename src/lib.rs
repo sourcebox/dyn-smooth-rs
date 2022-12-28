@@ -6,6 +6,9 @@ mod tan;
 /// Number of fractional bits for the i32 implementation.
 pub const I32_FRAC_BITS: u8 = tan::TAN_LUT_FRAC_BITS;
 
+/// Number of fractional bits used by the i32 implementation internally.
+const I32_INTERNAL_FRAC_BITS: u8 = 8;
+
 ////////////////////////////////////////////////////////////////////////////////
 
 /// Efficient variant of the smoother using f32.
@@ -77,6 +80,11 @@ impl DynamicSmootherEcoF32 {
         // Return lowpass 2 signal as output.
         self.low2
     }
+
+    /// Returns the last output value.
+    pub fn value(&self) -> f32 {
+        self.low2
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -131,10 +139,7 @@ impl DynamicSmootherEcoI32 {
 
     /// Processes a new input value and returns the smoothed output.
     pub fn tick(&mut self, input: i32) -> i32 {
-        /// Improve calculation by using fractional bits internally.
-        const INTERNAL_FRAC_BITS: u8 = 8;
-
-        let input = input << INTERNAL_FRAC_BITS;
+        let input = input << I32_INTERNAL_FRAC_BITS;
 
         // Store values from previous sample.
         let low1z = self.low1;
@@ -148,7 +153,7 @@ impl DynamicSmootherEcoI32 {
         // amount depending on the bandpass response and sensitivity.
         // Value is clamped to 1.
         let g = i32::min(
-            self.g0 + ((self.sense as i64 * bandz as i64) >> INTERNAL_FRAC_BITS) as i32,
+            self.g0 + ((self.sense as i64 * bandz as i64) >> I32_INTERNAL_FRAC_BITS) as i32,
             1 << tan::TAN_LUT_FRAC_BITS,
         );
 
@@ -163,7 +168,12 @@ impl DynamicSmootherEcoI32 {
             as i32;
 
         // Return lowpass 2 signal as output.
-        self.low2 >> INTERNAL_FRAC_BITS
+        self.low2 >> I32_INTERNAL_FRAC_BITS
+    }
+
+    /// Returns the last output value.
+    pub fn value(&self) -> i32 {
+        self.low2 >> I32_INTERNAL_FRAC_BITS
     }
 }
 
